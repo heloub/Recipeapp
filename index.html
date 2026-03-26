@@ -235,23 +235,7 @@
 
 <main>
 
-  <!-- Step 1: API Key -->
-  <div class="setup-card" id="api-key-card">
-    <h2>🔑 One-time Setup</h2>
-    <p>
-      This app uses Claude AI to create recipes. You need a free API key from Anthropic.<br>
-      <a href="https://console.anthropic.com" target="_blank">Get your free key at console.anthropic.com</a>
-      — paste it below. It's saved only on your device.
-    </p>
-    <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off" />
-    <div class="row">
-      <button class="btn-save" onclick="saveApiKey()">Save Key</button>
-      <button class="btn-secondary" onclick="clearApiKey()">Clear</button>
-    </div>
-    <p style="margin-top:10px; font-size:0.78rem; color:var(--muted);" id="key-status"></p>
-  </div>
-
-  <!-- Step 2: Ingredients -->
+  <!-- Step 1: Ingredients -->
   <div class="card">
     <h2>🛒 Your Ingredients</h2>
     <div class="row">
@@ -310,38 +294,6 @@
   let ingredients = [];
   let selectedTime = 30;
   let selectedCount = 2;
-
-  // ── API Key ─────────────────────────────────────────────────────────────
-  function saveApiKey() {
-    const key = document.getElementById('api-key-input').value.trim();
-    if (!key.startsWith('sk-ant-')) {
-      showKeyStatus('⚠️ That doesn\'t look like a valid key. It should start with sk-ant-', 'red');
-      return;
-    }
-    localStorage.setItem('claude_api_key', key);
-    document.getElementById('api-key-input').value = '●'.repeat(20);
-    showKeyStatus('✅ Key saved! You\'re all set.', 'green');
-  }
-
-  function clearApiKey() {
-    localStorage.removeItem('claude_api_key');
-    document.getElementById('api-key-input').value = '';
-    showKeyStatus('Key removed.', 'gray');
-  }
-
-  function showKeyStatus(msg, color) {
-    const el = document.getElementById('key-status');
-    el.textContent = msg;
-    el.style.color = color === 'green' ? '#2E7D32' : color === 'red' ? '#C62828' : '#888';
-  }
-
-  // Show masked key on load if saved
-  window.addEventListener('load', () => {
-    if (localStorage.getItem('claude_api_key')) {
-      document.getElementById('api-key-input').value = '●'.repeat(20);
-      showKeyStatus('✅ API key is saved on this device.', 'green');
-    }
-  });
 
   // ── Ingredients ─────────────────────────────────────────────────────────
   function addIngredient() {
@@ -404,11 +356,6 @@
 
   // ── Generate recipes ────────────────────────────────────────────────────
   async function generateRecipes() {
-    const apiKey = localStorage.getItem('claude_api_key');
-    if (!apiKey) {
-      showError('Please save your Claude API key first (see the setup card at the top).');
-      return;
-    }
     if (ingredients.length === 0) {
       showError('Please add at least one ingredient first!');
       return;
@@ -454,14 +401,9 @@ Keep steps clear and concise (6-9 steps max).
 Return ONLY the JSON array, no other text.`;
 
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/.netlify/functions/generate-recipes', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-calls': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-opus-4-6',
           max_tokens: 4096,
