@@ -413,7 +413,8 @@ Return ONLY the JSON array, no other text.`;
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        throw new Error(err.error?.message || `API error ${response.status}`);
+        const detail = err.error?.message || err.error || JSON.stringify(err);
+        throw new Error(`Server error ${response.status}: ${detail}`);
       }
 
       const data = await response.json();
